@@ -36,6 +36,29 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
+// Database connection test
+app.get('/test-db', async (req, res) => {
+  try {
+    const db = require('./config/db');
+    const result = await db.query('SELECT NOW()');
+    res.json({ 
+      status: 'Database connected', 
+      time: result.rows[0].now,
+      env_vars: {
+        JWT_SECRET: !!process.env.JWT_SECRET,
+        DB_HOST: !!process.env.DB_HOST,
+        DB_USER: !!process.env.DB_USER,
+        DB_DATABASE: !!process.env.DB_DATABASE
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'Database connection failed', 
+      error: error.message 
+    });
+  }
+});
+
 // Serve static files (for video uploads)
 app.use(express.static(path.join(__dirname, 'public')));
 
