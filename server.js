@@ -38,23 +38,30 @@ app.get('/health', (req, res) => {
 
 // Database connection test
 app.get('/test-db', async (req, res) => {
+  const envCheck = {
+    JWT_SECRET: !!process.env.JWT_SECRET,
+    DB_HOST: !!process.env.DB_HOST,
+    DB_USER: !!process.env.DB_USER,
+    DB_DATABASE: !!process.env.DB_DATABASE,
+    DB_PASSWORD: !!process.env.DB_PASSWORD,
+    DB_PORT: !!process.env.DB_PORT,
+    DATABASE_URL: !!process.env.DATABASE_URL
+  };
+  
   try {
     const db = require('./config/db');
     const result = await db.query('SELECT NOW()');
     res.json({ 
       status: 'Database connected', 
       time: result.rows[0].now,
-      env_vars: {
-        JWT_SECRET: !!process.env.JWT_SECRET,
-        DB_HOST: !!process.env.DB_HOST,
-        DB_USER: !!process.env.DB_USER,
-        DB_DATABASE: !!process.env.DB_DATABASE
-      }
+      env_vars: envCheck
     });
   } catch (error) {
     res.status(500).json({ 
       status: 'Database connection failed', 
-      error: error.message 
+      error: error.message || 'Unknown error',
+      stack: error.stack,
+      env_vars: envCheck
     });
   }
 });
