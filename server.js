@@ -15,13 +15,20 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
-app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:8080", "https://retro-message-vault.vercel.app"],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Middleware - More permissive CORS for debugging
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
