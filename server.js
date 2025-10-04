@@ -10,14 +10,14 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://retro-message-vault.vercel.app"], // Your React app's URLs
+    origin: ["http://localhost:5173", "http://localhost:8080", "https://retro-message-vault.vercel.app"], // Your React app's URLs
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "https://retro-message-vault.vercel.app"]
+  origin: ["http://localhost:5173", "http://localhost:8080", "https://retro-message-vault.vercel.app"]
 }));
 app.use(express.json());
 
