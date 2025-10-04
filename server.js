@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
@@ -29,7 +30,9 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(helmet());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -48,7 +51,7 @@ app.get('/test-db', async (req, res) => {
     DATABASE_URL: !!process.env.DATABASE_URL
   };
   
-  // Show which config is being used
+    // Show which config is being used
   const usingDatabaseUrl = !!process.env.DATABASE_URL;
   const dbConfig = usingDatabaseUrl ? 
     { connectionString: process.env.DATABASE_URL } :

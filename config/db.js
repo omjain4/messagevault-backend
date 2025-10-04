@@ -1,25 +1,31 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('Using DATABASE_URL:', process.env.DATABASE_URL ? 'YES' : 'NO');
+// Force DATABASE_URL usage for production
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL environment variable is required');
+  process.exit(1);
+}
 
-const pool = new Pool(
-  process.env.DATABASE_URL ? 
-  {
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  } : 
-  {
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Test connection on startup
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('Error acquiring client', err.stack);
+  } else {
+    console.log('Database connected successfully');
+    release();
   }
-);
+});
 
 module.exports = {
   query: (text, params) => pool.query(text, params),

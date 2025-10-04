@@ -5,6 +5,21 @@ const { v4: uuidv4 } = require('uuid'); // Import the uuid package
 
 exports.register = async (req, res) => {
   const { username, email, password, displayName } = req.body;
+  
+  // Validate input
+  if (!username || !email || !password) {
+    return res.status(400).json({ msg: 'Please provide username, email, and password' });
+  }
+  
+  if (password.length < 8) {
+    return res.status(400).json({ msg: 'Password must be at least 8 characters long' });
+  }
+  
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET not found in environment variables');
+    return res.status(500).json({ msg: 'Server configuration error' });
+  }
+  
   try {
     // Check if user already exists
     let user = await db.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
@@ -28,14 +43,23 @@ exports.register = async (req, res) => {
     // Create JWT token
     const payload = { user: { id: newUser.rows[0].id } };
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
-      if (err) throw err;
+      if (err) {
+        console.error('JWT signing error during registration:', err);
+        return res.status(500).json({ msg: 'Token generation failed' });
+      }
       res.json({ token, user: newUser.rows[0] });
     });
   } catch (err) {
-  console.error("--- REGISTER ERROR ---"); // Add this line
-  console.error(err); // Add this line
-  res.status(500).send('Server error');
-}
+    console.error("--- REGISTER ERROR ---");
+    console.error(err);
+    
+    // Handle specific database errors
+    if (err.code === '23505') { // PostgreSQL unique violation
+      return res.status(400).json({ msg: 'User with that email or username already exists' });
+    }
+    
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
 };
 
 exports.login = async (req, res) => {
