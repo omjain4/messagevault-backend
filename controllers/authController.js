@@ -40,7 +40,19 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+  
+  // Validate input
+  if (!email || !password) {
+    return res.status(400).json({ msg: 'Please provide email and password' });
+  }
+  
   try {
+    // Check JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET not found in environment variables');
+      return res.status(500).json({ msg: 'Server configuration error' });
+    }
+    
     let user = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (user.rows.length === 0) {
       return res.status(400).json({ msg: 'Invalid Credentials' });
@@ -53,15 +65,18 @@ exports.login = async (req, res) => {
 
     const payload = { user: { id: user.rows[0].id } };
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
-      if (err) throw err;
+      if (err) {
+        console.error('JWT signing error:', err);
+        return res.status(500).json({ msg: 'Token generation failed' });
+      }
       const { password_hash, ...userData } = user.rows[0];
       res.json({ token, user: userData });
     });
   } catch (err) {
-  console.error("--- LOGIN ERROR ---"); // Add this line
-  console.error(err); // Add this line
-  res.status(500).send('Server error');
-}
+    console.error("--- LOGIN ERROR ---");
+    console.error(err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
 };
 
 exports.getMe = async (req, res) => {
