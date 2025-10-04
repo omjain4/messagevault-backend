@@ -48,20 +48,35 @@ app.get('/test-db', async (req, res) => {
     DATABASE_URL: !!process.env.DATABASE_URL
   };
   
+  // Show which config is being used
+  const usingDatabaseUrl = !!process.env.DATABASE_URL;
+  const dbConfig = usingDatabaseUrl ? 
+    { connectionString: process.env.DATABASE_URL } :
+    {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      database: process.env.DB_DATABASE,
+      port: process.env.DB_PORT
+    };
+  
   try {
     const db = require('./config/db');
     const result = await db.query('SELECT NOW()');
     res.json({ 
       status: 'Database connected', 
       time: result.rows[0].now,
-      env_vars: envCheck
+      env_vars: envCheck,
+      using_database_url: usingDatabaseUrl,
+      config: dbConfig
     });
   } catch (error) {
     res.status(500).json({ 
       status: 'Database connection failed', 
       error: error.message || 'Unknown error',
       stack: error.stack,
-      env_vars: envCheck
+      env_vars: envCheck,
+      using_database_url: usingDatabaseUrl,
+      config: dbConfig
     });
   }
 });
