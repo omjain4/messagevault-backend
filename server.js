@@ -10,13 +10,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Your React app's URL
+    origin: ["http://localhost:5173", "https://retro-message-vault.vercel.app"], // Your React app's URLs
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://retro-message-vault.vercel.app"]
+}));
 app.use(express.json());
 
 // Serve static files (for video uploads)
