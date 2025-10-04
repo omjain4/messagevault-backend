@@ -17,9 +17,17 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:8080", "https://retro-message-vault.vercel.app"]
+  origin: ["http://localhost:5173", "http://localhost:8080", "https://retro-message-vault.vercel.app"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
 
 // Serve static files (for video uploads)
 app.use(express.static(path.join(__dirname, 'public')));
